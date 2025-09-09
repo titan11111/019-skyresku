@@ -1,11 +1,11 @@
 // HTML要素の取得
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const scoreDisplay = document.getElementById('score');
-const highScoreDisplay = document.getElementById('highScore');
+const distanceDisplay = document.getElementById('distance');
+const highDistanceDisplay = document.getElementById('highDistance');
 const gameOverOverlay = document.getElementById('gameOverOverlay');
-const finalScoreDisplay = document.getElementById('finalScore');
-const newHighScoreDisplay = document.getElementById('newHighScore');
+const finalDistanceDisplay = document.getElementById('finalDistance');
+const newRecordDisplay = document.getElementById('newRecord');
 const restartButton = document.getElementById('restartButton');
 const startButton = document.getElementById('startButton');
 const startScreen = document.getElementById('startScreen');
@@ -23,8 +23,8 @@ let player;
 let obstacles = [];
 let items = [];
 let particles = [];
-let score = 0;
-let highScore = localStorage.getItem('highScore') || 0;
+let distance = 0;
+let highDistance = localStorage.getItem('highDistance') || 0;
 let gameOver = false;
 let gameStarted = false;
 let gameLoopId;
@@ -47,14 +47,19 @@ const MIN_OBSTACLE_GAP = 80;
 
 let lastObstacleSpawnTime = 0;
 let lastItemSpawnTime = 0;
-let lastDifficultyScore = -1;
-let lastFeatherScore = 0;
+let lastDifficultyDistance = -1;
+let lastFeatherDistance = 0;
 
 // パワーアップ効果
 let featherTime = 0;
 let shieldTime = 0;
 let shieldHits = 0; // シールドで耐えられる回数
 let starCount = 0;
+
+const starPositions = Array.from({ length: 50 }, () => ({
+    x: Math.random() * GAME_WIDTH,
+    y: Math.random() * GAME_HEIGHT
+}));
 
 // 効果音（Web Audio API使用）
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -460,26 +465,26 @@ function initGame() {
     GRAVITY = 0.008;
     OBSTACLE_SPEED = 0.2;
     OBSTACLE_SPAWN_INTERVAL = 1200;
-    lastDifficultyScore = -1;
-    
+    lastDifficultyDistance = -1;
+
     player = new Player();
     obstacles = [];
     items = [];
     particles = [];
-    score = 0;
+    distance = 0;
     gameOver = false;
-    
+
     featherTime = 0;
     shieldTime = 0;
     shieldHits = 0;
     starCount = 0;
-    lastFeatherScore = 0;
-    
+    lastFeatherDistance = 0;
+
     updateDisplays();
-    
+
     gameOverOverlay.style.display = 'none';
     startScreen.style.display = 'none';
-    
+
     if (gameLoopId) {
         cancelAnimationFrame(gameLoopId);
     }
@@ -488,8 +493,8 @@ function initGame() {
 
 // 表示更新
 function updateDisplays() {
-    scoreDisplay.textContent = score;
-    highScoreDisplay.textContent = highScore;
+    distanceDisplay.textContent = Math.floor(distance);
+    highDistanceDisplay.textContent = highDistance;
     featherTimeDisplay.textContent = Math.ceil(featherTime / 60);
     shieldTimeDisplay.textContent = Math.ceil(shieldTime / 60);
     starCountDisplay.textContent = starCount;
@@ -546,28 +551,123 @@ function endGame() {
     gameOver = true;
     cancelAnimationFrame(gameLoopId);
     playGameOverSound();
-    finalScoreDisplay.textContent = score;
-    if (score > highScore) {
-        highScore = score;
-        localStorage.setItem('highScore', highScore);
-        newHighScoreDisplay.style.display = 'block';
+    finalDistanceDisplay.textContent = Math.floor(distance);
+    if (distance > highDistance) {
+        highDistance = distance;
+        localStorage.setItem('highDistance', highDistance);
+        newRecordDisplay.style.display = 'block';
     } else {
-        newHighScoreDisplay.style.display = 'none';
+        newRecordDisplay.style.display = 'none';
     }
     gameOverOverlay.style.display = 'flex';
+}
+
+function drawCloud(x, y) {
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(x, y, 15, 0, Math.PI * 2);
+    ctx.arc(x + 20, y, 20, 0, Math.PI * 2);
+    ctx.arc(x + 40, y, 15, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function drawBackground() {
+    let gradient;
+    if (distance < 500) {
+        gradient = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
+        gradient.addColorStop(0, '#87CEEB');
+        gradient.addColorStop(1, '#98D8EA');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(GAME_WIDTH - 40, 40, 20, 0, Math.PI * 2);
+        ctx.fill();
+        drawCloud(40, 60);
+        drawCloud(120, 80);
+    } else if (distance < 1000) {
+        gradient = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
+        gradient.addColorStop(0, '#FF7E5F');
+        gradient.addColorStop(1, '#FEB47B');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(GAME_WIDTH / 2, GAME_HEIGHT - 30, 30, 0, Math.PI * 2);
+        ctx.fill();
+    } else if (distance < 1500) {
+        gradient = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
+        gradient.addColorStop(0, '#001848');
+        gradient.addColorStop(1, '#000000');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        ctx.fillStyle = '#F0E68C';
+        ctx.beginPath();
+        ctx.arc(GAME_WIDTH - 50, 50, 25, 0, Math.PI * 2);
+        ctx.fill();
+        starPositions.forEach(s => {
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(s.x, s.y, 2, 2);
+        });
+    } else if (distance < 2000) {
+        gradient = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
+        gradient.addColorStop(0, '#2c3e50');
+        gradient.addColorStop(1, '#000000');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        ctx.fillStyle = '#1a1a1a';
+        for (let i = 0; i < GAME_WIDTH; i += 30) {
+            const h = 50 + (i % 60);
+            ctx.fillRect(i, GAME_HEIGHT - h, 20, h);
+        }
+    } else if (distance < 2500) {
+        gradient = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
+        gradient.addColorStop(0, '#2E8B57');
+        gradient.addColorStop(1, '#006400');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        ctx.fillStyle = '#2F4F4F';
+        ctx.beginPath();
+        ctx.moveTo(0, GAME_HEIGHT);
+        ctx.lineTo(80, GAME_HEIGHT - 80);
+        ctx.lineTo(160, GAME_HEIGHT);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(120, GAME_HEIGHT);
+        ctx.lineTo(220, GAME_HEIGHT - 100);
+        ctx.lineTo(300, GAME_HEIGHT);
+        ctx.closePath();
+        ctx.fill();
+    } else if (distance < 3000) {
+        gradient = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
+        gradient.addColorStop(0, '#8B0000');
+        gradient.addColorStop(1, '#FF4500');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    } else {
+        gradient = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
+        gradient.addColorStop(0, '#FFFFFF');
+        gradient.addColorStop(1, '#E0FFFF');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        drawCloud(50, 60);
+        drawCloud(200, 80);
+    }
 }
 
 // ゲームループ
 function gameLoop(timestamp) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawBackground();
 
     const now = Date.now();
 
-    if (score - lastDifficultyScore >= 30) {
+    if (distance - lastDifficultyDistance >= 30) {
         GRAVITY += 0.001;
         OBSTACLE_SPEED += 0.02;
         if (OBSTACLE_SPAWN_INTERVAL > 500) OBSTACLE_SPAWN_INTERVAL -= 50;
-        lastDifficultyScore = score;
+        lastDifficultyDistance = distance;
     }
 
     const fallMultiplier = featherTime > 0 ? 0.7 : 1;
@@ -622,7 +722,7 @@ function gameLoop(timestamp) {
                 createParticles(item.x, item.y, 'rgba(0,255,255,1)', 12);
             } else if (item.type === 'star') {
                 starCount++;
-                score += 5;
+                distance += 5;
                 createParticles(item.x, item.y, 'rgba(255,215,0,1)', 12);
             }
             break;
@@ -632,12 +732,12 @@ function gameLoop(timestamp) {
     if (featherTime > 0) featherTime--;
     if (shieldTime > 0) shieldTime--;
 
-    score++;
+    distance++;
     updateDisplays();
 
-    if (score % 1000 === 0 && score !== 0 && score !== lastFeatherScore) {
+    if (distance % 1000 === 0 && distance !== 0 && distance !== lastFeatherDistance) {
         spawnFeather();
-        lastFeatherScore = score;
+        lastFeatherDistance = distance;
     }
 
     if (now - lastObstacleSpawnTime > OBSTACLE_SPAWN_INTERVAL && canSpawnObstacle()) {
@@ -654,7 +754,7 @@ function gameLoop(timestamp) {
 }
 
 function spawnObstacle() {
-    const difficulty = Math.floor(score / 100);
+    const difficulty = Math.floor(distance / 100);
 
     const baseGapWidth = GAME_WIDTH * 0.8;
     const gapWidth = Math.max(baseGapWidth - difficulty * 15, PLAYER_SIZE * 2);

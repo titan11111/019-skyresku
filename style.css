@@ -221,7 +221,7 @@ canvas {
     transform: translateY(-2px);
 }
 
-#newHighScore {
+#newRecord {
     color: #FFD700;
     font-size: 1.4rem;
     animation: sparkle 1s infinite alternate;
