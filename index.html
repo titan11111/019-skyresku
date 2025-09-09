@@ -10,8 +10,8 @@
     <div class="game-container">
         <div class="game-info">
             <div class="score-panel">
-                <div>スコア: <span id="score">0</span></div>
-                <div>ハイスコア: <span id="highScore">0</span></div>
+                <div>落下距離: <span id="distance">0</span></div>
+                <div>最高距離: <span id="highDistance">0</span></div>
             </div>
             <div class="power-ups">
                 <div class="power-up-item">
@@ -32,8 +32,8 @@
             <canvas id="gameCanvas"></canvas>
             <div id="gameOverOverlay" class="game-over-overlay hidden" style="display: none;">
                 <h2>ゲームオーバー！</h2>
-                <p>最終スコア: <span id="finalScore">0</span></p>
-                <p id="newHighScore" style="display: none;">🎉 新記録達成！ 🎉</p>
+                <p>落下距離: <span id="finalDistance">0</span></p>
+                <p id="newRecord" style="display: none;">🎉 新記録達成！ 🎉</p>
                 <button id="restartButton">もう一度プレイ</button>
             </div>
             <div id="startScreen" class="start-screen">
@@ -42,7 +42,7 @@
                 <div class="instructions">
                   <p>🪶 羽 - 落下速度ダウン</p>
                     <p>🛡️ シールド - 20秒間無敵（5回敵に当たると終了）</p>
-                    <p>🌟 スター - ボーナスポイント</p>
+                    <p>🌟 スター - ボーナス距離</p>
                 </div>
                 <button id="startButton">ゲーム開始</button>
             </div>
