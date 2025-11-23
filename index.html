@@ -2,25 +2,27 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ヒヤヒヤ落下ゲーム</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Stray Cat Fall</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="game-container">
+        <div class="paper-overlay"></div>
+
         <div class="game-info">
             <div class="score-panel">
-                <div>落下距離: <span id="distance">0</span></div>
-                <div>最高距離: <span id="highDistance">0</span></div>
+                <div>Depth: <span id="distance">0</span>m</div>
+                <div>Best: <span id="highDistance">0</span>m</div>
             </div>
             <div class="power-ups">
                 <div class="power-up-item">
                   <span class="power-icon">🪶</span>
-                  <span id="featherTime">0</span>s
+                  <span id="featherTime">0</span>
                 </div>
                 <div class="power-up-item">
                     <span class="power-icon">🛡️</span>
-                    <span id="shieldTime">0</span>s
+                    <span id="shieldTime">0</span>
                 </div>
                 <div class="power-up-item">
                     <span class="power-icon">🌟</span>
@@ -28,32 +30,41 @@
                 </div>
             </div>
         </div>
-        <div style="position: relative;">
+        
+        <div class="canvas-wrapper">
             <canvas id="gameCanvas"></canvas>
-            <div id="gameOverOverlay" class="game-over-overlay hidden" style="display: none;">
-                <h2>ゲームオーバー！</h2>
-                <p>落下距離: <span id="finalDistance">0</span></p>
-                <p id="newRecord" style="display: none;">🎉 新記録達成！ 🎉</p>
-                <button id="restartButton">もう一度プレイ</button>
+            
+            <div id="windIndicator" class="wind-indicator" style="display: none;">
+                WARNING: WIND <span id="windDirection">→</span>
             </div>
+
+            <div id="gameOverOverlay" class="game-over-overlay" style="display: none;">
+                <h2>The End</h2>
+                <p>到達深度: <span id="finalDistance">0</span>m</p>
+                <p id="newRecord" style="display: none;">✨ New Record ✨</p>
+                <button id="restartButton">Wake Up (Replay)</button>
+            </div>
+
             <div id="startScreen" class="start-screen">
-                <h1>ヒヤヒヤ落下ゲーム</h1>
-                <p>障害物を避けてアイテムを集めよう！</p>
+                <h1>Stray Cat Fall</h1>
+                <p class="subtitle">終わらない夢の中へ...</p>
                 <div class="instructions">
-                  <p>🪶 羽 - 落下速度ダウン</p>
-                    <p>🛡️ シールド - 20秒間無敵（5回敵に当たると終了）</p>
-                    <p>🌟 スター - ボーナス距離</p>
+                    <p>🪶 羽 - ふわりと舞う（減速）</p>
+                    <p>🛡️ 盾 - 悪夢を防ぐ（無敵）</p>
+                    <p>🌟 星 - 希望のかけら（スコア）</p>
                 </div>
-                <button id="startButton">ゲーム開始</button>
+                <button id="startButton">Dream Start</button>
             </div>
         </div>
+
         <div class="controls">
-            <div class="left-controls">
+            <div class="d-pad">
                 <button id="leftButton" class="control-button" type="button">←</button>
+                <div class="vertical-buttons">
+                    <button id="upButton" class="control-button" type="button">↑</button>
+                    <button id="downButton" class="control-button" type="button">↓</button>
+                </div>
                 <button id="rightButton" class="control-button" type="button">→</button>
-            </div>
-            <div class="right-controls">
-                <button id="upButton" class="control-button" type="button">↑</button>
             </div>
         </div>
     </div>
