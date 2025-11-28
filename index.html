@@ -2,7 +2,9 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Stray Cat Fall - Galaxy Mission</title>
     <style>
         * {
@@ -10,34 +12,42 @@
             padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none; /* iOS長押しメニュー無効化 */
             user-select: none;
+            -webkit-user-select: none;
+            touch-action: none; /* ブラウザのデフォルトジェスチャ無効化 */
         }
         body {
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: #1a1a2e; /* 枠外は宇宙色に */
+            background: #1a1a2e;
             font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
             overflow: hidden;
-            touch-action: none;
+            overscroll-behavior: none;
         }
         #gameContainer {
             position: relative;
             width: 100%;
-            max-width: 450px;
-            aspect-ratio: 9/16;
+            height: 100vh; /* 全画面表示 */
+            max-width: 500px; /* タブレット等で見やすく */
+            max-height: 900px;
             background: #87CEEB;
-            border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 0 50px rgba(100, 200, 255, 0.3); /* 光る影 */
+            box-shadow: 0 0 50px rgba(100, 200, 255, 0.3);
+        }
+        /* スマートフォンでの全画面調整 */
+        @media (max-width: 500px) {
+            #gameContainer {
+                border-radius: 0;
+                max-height: 100vh;
+            }
         }
         #gameCanvas {
             width: 100%;
             height: 100%;
             display: block;
-            touch-action: none;
-            -webkit-touch-callout: none;
         }
         
         /* UI共通 */
@@ -51,48 +61,43 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(0, 0, 0, 0.4); /* 背景を少し暗く */
+            background: rgba(0, 0, 0, 0.5);
             transition: opacity 0.5s;
             z-index: 20;
             backdrop-filter: blur(5px);
+            padding: 20px;
         }
         .screen.hidden {
             opacity: 0;
             pointer-events: none;
         }
 
-        /* オープニング・リザルトパネル */
+        /* パネルデザイン */
         .panel {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 30px;
-            padding: 30px 40px;
+            padding: 30px 20px;
             text-align: center;
             box-shadow: 0 15px 50px rgba(0,0,0,0.3);
             animation: floatPanel 3s ease-in-out infinite;
             border: 4px solid #fff;
-            max-width: 85%;
+            width: 100%;
+            max-width: 320px;
         }
         @keyframes floatPanel {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-10px); }
         }
 
-        /* かっこいいタイトル装飾 */
         .title {
             font-size: 32px;
             font-weight: 900;
             color: #fff;
             margin-bottom: 10px;
-            /* ネオン風テキストシャドウ */
-            text-shadow: 
-                0 0 5px #FF6B9D,
-                0 0 10px #FF6B9D,
-                0 0 20px #FF6B9D,
-                2px 2px 0px #FFD700;
+            text-shadow: 0 0 5px #FF6B9D, 0 0 10px #FF6B9D, 2px 2px 0px #FFD700;
             letter-spacing: 1px;
             transform: skew(-5deg);
         }
-        
         .subtitle {
             font-size: 14px;
             color: #6B5B95;
@@ -100,12 +105,12 @@
             font-weight: bold;
             letter-spacing: 2px;
         }
-
         .catIcon {
             font-size: 70px;
             margin: 10px 0;
             filter: drop-shadow(0 5px 15px rgba(0,0,0,0.2));
             animation: bounce 1s ease-in-out infinite;
+            display: inline-block;
         }
         @keyframes bounce {
             0%, 100% { transform: translateY(0) rotate(-5deg); }
@@ -116,26 +121,19 @@
             background: linear-gradient(135deg, #FF6B9D 0%, #FFB6D9 100%);
             border: none;
             border-radius: 50px;
-            padding: 15px 60px;
-            font-size: 22px;
+            padding: 15px 50px;
+            font-size: 20px;
             font-weight: bold;
             color: white;
             cursor: pointer;
             box-shadow: 0 10px 20px rgba(255,107,157,0.4);
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.1s;
             margin-top: 20px;
-            text-shadow: 0 2px 2px rgba(0,0,0,0.1);
-            animation: pulseBtn 2s infinite;
+            width: 100%;
+            max-width: 240px;
+            -webkit-appearance: none; /* iOSボタンリセット */
         }
-        @keyframes pulseBtn {
-            0% { transform: scale(1); box-shadow: 0 10px 20px rgba(255,107,157,0.4); }
-            50% { transform: scale(1.05); box-shadow: 0 15px 30px rgba(255,107,157,0.6); }
-            100% { transform: scale(1); box-shadow: 0 10px 20px rgba(255,107,157,0.4); }
-        }
-        .btn:active {
-            transform: scale(0.95);
-            animation: none;
-        }
+        .btn:active { transform: scale(0.95); }
 
         .score-display {
             font-size: 16px;
@@ -149,43 +147,30 @@
             font-family: monospace;
         }
 
-        /* 背景のアニメーション星 (CSSのみでオープニング演出) */
+        /* 背景のアニメーション星 */
         .start-bg-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            z-index: -1;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            overflow: hidden; z-index: -1;
             background: linear-gradient(180deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
         }
         .star-anim {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            animation: twinkle var(--duration) ease-in-out infinite;
-            opacity: 0;
+            position: absolute; background: white; border-radius: 50%;
+            animation: twinkle var(--duration) ease-in-out infinite; opacity: 0;
         }
         @keyframes twinkle {
             0%, 100% { opacity: 0; transform: scale(0.5); }
             50% { opacity: 1; transform: scale(1.2); }
         }
 
-        /* HUD & Controls */
+        /* HUD */
         #hud {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            display: flex;
-            justify-content: space-between;
-            font-size: 16px;
-            font-weight: bold;
-            color: white;
+            top: env(safe-area-inset-top, 20px); /* ノッチ対応 */
+            left: 10px; right: 10px;
+            display: flex; justify-content: space-between;
+            font-size: 16px; font-weight: bold; color: white;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-            pointer-events: none;
-            z-index: 10;
+            pointer-events: none; z-index: 10;
         }
         .hud-item {
             background: rgba(0,0,0,0.4);
@@ -194,64 +179,68 @@
             border: 1px solid rgba(255,255,255,0.2);
             backdrop-filter: blur(4px);
         }
-        
+
+        /* Controls Layer - 画面下部に配置 */
         #controls-layer {
             position: absolute;
-            bottom: 15px;
-            left: 0;
-            width: 100%;
-            height: 130px;
-            pointer-events: none;
-            z-index: 15;
-            display: flex;
-            justify-content: space-between;
-            padding: 0 25px;
-            align-items: flex-end;
-        }
-        .control-group-left { display: flex; gap: 18px; }
-        .control-btn {
-            width: 75px; height: 75px;
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            border-radius: 50%;
-            backdrop-filter: blur(4px);
-            pointer-events: auto;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 32px; color: white;
-            text-shadow: 0 2px 6px rgba(0,0,0,0.4);
-            touch-action: manipulation;
-            transition: background 0.1s, transform 0.1s;
-        }
-        .control-btn:active, .control-btn.active {
-            background: rgba(255, 182, 217, 0.6);
-            transform: scale(0.92);
-        }
-        .btn-float {
-            width: 95px; height: 95px;
-            background: rgba(255, 215, 0, 0.4);
-            border-color: rgba(255, 215, 0, 0.8);
-            font-size: 42px;
-        }
-        .btn-float:active, .btn-float.active {
-            background: rgba(255, 215, 0, 0.8);
-        }
-
-        #bgmStatus {
-            position: absolute; top: 50px; left: 10px;
-            font-size: 10px; color: rgba(255,255,255,0.7); z-index: 5;
+            bottom: env(safe-area-inset-bottom, 20px);
+            left: 0; width: 100%; height: 140px;
+            pointer-events: none; z-index: 15;
+            display: flex; justify-content: space-between;
+            padding: 0 20px; align-items: flex-end;
         }
         
-        /* Game Clear Color */
-        .clear-text {
-            color: #FFD700 !important;
-            text-shadow: 0 0 10px #FF8C00;
+        /* 視覚的なボタンガイド（実際は画面全体で判定するが、ガイドとして残す） */
+        .control-group-left { display: flex; gap: 20px; opacity: 0.8; }
+        .control-btn {
+            width: 70px; height: 70px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            backdrop-filter: blur(4px);
+            display: flex; justify-content: center; align-items: center;
+            font-size: 30px; color: white;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            transition: transform 0.1s, background 0.1s;
         }
+        /* アクティブ時のスタイル */
+        .control-btn.active {
+            background: rgba(255, 182, 217, 0.6);
+            transform: scale(0.9);
+            border-color: #fff;
+        }
+        .btn-float {
+            width: 90px; height: 90px;
+            background: rgba(255, 215, 0, 0.3);
+            border-color: rgba(255, 215, 0, 0.7);
+            font-size: 40px;
+        }
+        .btn-float.active { background: rgba(255, 215, 0, 0.8); }
+
+        /* タッチエリアの可視化（デバッグ用ではなく、直感操作用） */
+        #touch-zones {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 5; display: flex;
+        }
+        .zone { width: 50%; height: 100%; }
+
+        #bgmStatus {
+            position: absolute; top: 60px; left: 10px;
+            font-size: 10px; color: rgba(255,255,255,0.7); z-index: 5;
+            pointer-events: none;
+        }
+        .clear-text { color: #FFD700 !important; text-shadow: 0 0 10px #FF8C00; }
     </style>
 </head>
 <body>
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
         
+        <div id="touch-zones">
+            <div class="zone" id="zoneLeft"></div>
+            <div class="zone" id="zoneRight"></div>
+        </div>
+
         <div id="hud" class="hidden">
             <div class="hud-item">🌟 <span id="starCount">0</span></div>
             <div class="hud-item">📏 <span id="depth">0</span>m</div>
@@ -261,15 +250,14 @@
 
         <div id="controls-layer" class="hidden">
             <div class="control-group-left">
-                <div class="control-btn" id="btnLeft">←</div>
-                <div class="control-btn" id="btnRight">→</div>
+                <div class="control-btn" id="visualBtnLeft">←</div>
+                <div class="control-btn" id="visualBtnRight">→</div>
             </div>
-            <div class="control-btn btn-float" id="btnFloat">🎈</div>
+            <div class="control-btn btn-float" id="btnFloat" style="pointer-events: auto;">🎈</div>
         </div>
         
         <div id="startScreen" class="screen">
             <div class="start-bg-layer" id="startBgAnim"></div>
-            
             <div class="panel">
                 <div class="subtitle">超・落下アクション</div>
                 <div class="title">Stray Cat Fall</div>
@@ -310,26 +298,29 @@
     </audio>
 
     <script>
-        // --- ゲーム設定 ---
+        // --- 設定調整（操作感をよりスムーズに） ---
         const CONFIG = {
-            CAT_SIZE: 40,
-            GRAVITY: 0.15,
-            FLOAT_POWER: 0.35,
-            MOVE_SPEED: 5,
-            MOVE_ACCEL: 0.4,
-            MOVE_FRICTION: 0.85,
-            MAX_FALL_SPEED: 8,
-            SPAWN_INTERVAL_BASE: 2000,
-            SPAWN_INTERVAL_MIN: 1000,
+            CAT_SIZE: 42,
+            GRAVITY: 0.16,
+            FLOAT_POWER: 0.4,
+            
+            // 移動フィジックスの改良
+            MOVE_ACCEL: 0.8,        // 加速を強化（反応を良くする）
+            MOVE_FRICTION: 0.86,    // 摩擦調整（滑りすぎず、止まりすぎず）
+            MAX_H_SPEED: 9,         // 横移動の最高速度アップ
+            
+            MAX_FALL_SPEED: 9,
+            SPAWN_INTERVAL_BASE: 1800,
+            SPAWN_INTERVAL_MIN: 900,
             RISING_ENEMY_START_DEPTH: 500,
-            GOAL_DEPTH: 10000 // ゴール設定
+            GOAL_DEPTH: 10000
         };
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         let canvasWidth, canvasHeight;
 
-        let gameState = 'start'; // start, playing, result, clear
+        let gameState = 'start';
         let depth = 0;
         let scrollSpeed = 0;
         let bestScore = parseInt(localStorage.getItem('strayCatBest')) || 0;
@@ -339,39 +330,21 @@
         let frameCount = 0;
         let shakeIntensity = 0;
 
-        let cat = { x: 0, y: 0, vx: 0, vy: 0, expression: 'normal', expressionTimer: 0 };
+        let cat = { x: 0, y: 0, vx: 0, vy: 0, angle: 0, expression: 'normal', expressionTimer: 0 };
         let obstacles = [];
         let items = [];
         let particles = [];
         let speedLines = [];
         let bgParticles = [];
 
-        let touchLeft = false;
-        let touchRight = false;
-        let isFloating = false;
-        let activeTouches = new Map();
+        // 入力状態
+        let inputState = { left: false, right: false, float: false };
 
         const bgm = document.getElementById('bgm');
         bgm.volume = 0.4;
         let audioCtx = null;
 
-        // スタート画面の星生成（CSSアニメーション用）
-        function initStartScreenStars() {
-            const container = document.getElementById('startBgAnim');
-            container.innerHTML = '';
-            for(let i=0; i<30; i++) {
-                const star = document.createElement('div');
-                star.className = 'star-anim';
-                star.style.left = Math.random() * 100 + '%';
-                star.style.top = Math.random() * 100 + '%';
-                star.style.width = (Math.random() * 3 + 1) + 'px';
-                star.style.height = star.style.width;
-                star.style.setProperty('--duration', (Math.random() * 2 + 1) + 's');
-                star.style.animationDelay = (Math.random() * 2) + 's';
-                container.appendChild(star);
-            }
-        }
-
+        // オーディオ初期化
         function initAudio() {
             if (!audioCtx) {
                 try {
@@ -391,7 +364,7 @@
                 bgm.play().then(() => {
                     document.getElementById('bgmStatus').textContent = "";
                 }).catch(() => {
-                    document.getElementById('bgmStatus').textContent = "🎵 タップして再生";
+                    document.getElementById('bgmStatus').textContent = "🎵 画面タップでBGM再生";
                 });
             }, 100);
         }
@@ -433,88 +406,101 @@
                 gain.gain.linearRampToValueAtTime(0, now + 0.3);
                 osc.start(now); osc.stop(now + 0.3);
             } else if (type === 'clear') {
-                // クリア時のファンファーレ風
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(523.25, now); // Do
-                osc.frequency.setValueAtTime(659.25, now + 0.1); // Mi
-                osc.frequency.setValueAtTime(783.99, now + 0.2); // So
-                osc.frequency.setValueAtTime(1046.50, now + 0.3); // Do!
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.setValueAtTime(659.25, now + 0.1);
+                osc.frequency.setValueAtTime(783.99, now + 0.2);
+                osc.frequency.setValueAtTime(1046.50, now + 0.3);
                 gain.gain.setValueAtTime(0.3, now);
                 gain.gain.linearRampToValueAtTime(0, now + 0.8);
                 osc.start(now); osc.stop(now + 0.8);
             }
         }
 
+        // リサイズ処理（高解像度対応）
         function resize() {
             const container = document.getElementById('gameContainer');
             const rect = container.getBoundingClientRect();
-            canvas.width = rect.width * window.devicePixelRatio;
-            canvas.height = rect.height * window.devicePixelRatio;
+            // デバイスピクセル比を考慮
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
             canvasWidth = rect.width;
             canvasHeight = rect.height;
-            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            // コンテキストのスケール調整
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         }
 
-        // コントローラー設定
-        function setupButton(id, type) {
-            const btn = document.getElementById(id);
-            const startAction = (e) => {
-                e.preventDefault(); e.stopPropagation();
-                btn.classList.add('active');
-                if (type === 'left') {
-                    touchLeft = true;
-                    if (e.touches) for (let touch of e.touches) activeTouches.set(touch.identifier, type);
-                } else if (type === 'right') {
-                    touchRight = true;
-                    if (e.touches) for (let touch of e.touches) activeTouches.set(touch.identifier, type);
-                } else if (type === 'float') {
-                    isFloating = true;
-                    createParticles(cat.x, cat.y + 20, '#FFF', 3);
-                    playSound('float');
-                    if (e.touches) for (let touch of e.touches) activeTouches.set(touch.identifier, type);
-                }
-            };
-            const endAction = (e) => {
-                e.preventDefault(); e.stopPropagation();
-                if (e.type === 'touchcancel' || e.type === 'touchend') {
-                    if (e.changedTouches) {
-                        for (let touch of e.changedTouches) {
-                            if (activeTouches.get(touch.identifier) === type) {
-                                activeTouches.delete(touch.identifier);
-                                resetButtonState(type);
-                            }
+        // --- コントローラーロジックの刷新 ---
+        // 画面の左半分、右半分で操作を判定する
+        function setupControls() {
+            const zoneLeft = document.getElementById('zoneLeft');
+            const zoneRight = document.getElementById('zoneRight');
+            const btnFloat = document.getElementById('btnFloat');
+            const vBtnLeft = document.getElementById('visualBtnLeft');
+            const vBtnRight = document.getElementById('visualBtnRight');
+
+            // 汎用タッチハンドラ
+            const handleTouch = (elem, action, isStart) => {
+                const handler = (e) => {
+                    // デフォルト動作を防ぐ（スクロール防止）
+                    if(e.cancelable) e.preventDefault(); 
+                    
+                    if (action === 'left') {
+                        inputState.left = isStart;
+                        isStart ? vBtnLeft.classList.add('active') : vBtnLeft.classList.remove('active');
+                    } else if (action === 'right') {
+                        inputState.right = isStart;
+                        isStart ? vBtnRight.classList.add('active') : vBtnRight.classList.remove('active');
+                    } else if (action === 'float') {
+                        inputState.float = isStart;
+                        isStart ? btnFloat.classList.add('active') : btnFloat.classList.remove('active');
+                        if (isStart && gameState === 'playing') {
+                            playSound('float');
+                            createParticles(cat.x, cat.y + 20, '#FFF', 3);
                         }
                     }
-                } else resetButtonState(type);
+                };
+                elem.addEventListener('touchstart', handler, { passive: false });
+                elem.addEventListener('touchend', handler, { passive: false });
+                elem.addEventListener('mousedown', handler);
+                elem.addEventListener('mouseup', handler);
+                elem.addEventListener('mouseleave', () => {
+                    // マウスが離れた場合もOFFにする
+                    if (action === 'left') { inputState.left = false; vBtnLeft.classList.remove('active'); }
+                    if (action === 'right') { inputState.right = false; vBtnRight.classList.remove('active'); }
+                    if (action === 'float') { inputState.float = false; btnFloat.classList.remove('active'); }
+                });
             };
-            const resetButtonState = (buttonType) => {
-                btn.classList.remove('active');
-                if (buttonType === 'left') touchLeft = false;
-                else if (buttonType === 'right') touchRight = false;
-                else if (buttonType === 'float') isFloating = false;
-            };
-            btn.addEventListener('touchstart', startAction, {passive: false});
-            btn.addEventListener('touchend', endAction, {passive: false});
-            btn.addEventListener('touchcancel', endAction, {passive: false});
-            btn.addEventListener('mousedown', startAction);
-            btn.addEventListener('mouseup', endAction);
-            btn.addEventListener('mouseleave', endAction);
+
+            handleTouch(zoneLeft, 'left', true);
+            handleTouch(zoneLeft, 'left', false); // Start/Endは関数内で分岐
+            
+            handleTouch(zoneRight, 'right', true);
+            handleTouch(zoneRight, 'right', false);
+
+            handleTouch(btnFloat, 'float', true);
+            handleTouch(btnFloat, 'float', false);
+
+            // キーボード操作
+            document.addEventListener('keydown', (e) => {
+                if (e.repeat) return;
+                if (e.key === 'ArrowLeft' || e.key === 'a') { inputState.left = true; vBtnLeft.classList.add('active'); }
+                if (e.key === 'ArrowRight' || e.key === 'd') { inputState.right = true; vBtnRight.classList.add('active'); }
+                if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w') { 
+                    inputState.float = true; 
+                    btnFloat.classList.add('active');
+                    if(gameState === 'playing') { playSound('float'); createParticles(cat.x, cat.y + 20, '#FFF', 3); }
+                }
+            });
+            document.addEventListener('keyup', (e) => {
+                if (e.key === 'ArrowLeft' || e.key === 'a') { inputState.left = false; vBtnLeft.classList.remove('active'); }
+                if (e.key === 'ArrowRight' || e.key === 'd') { inputState.right = false; vBtnRight.classList.remove('active'); }
+                if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w') { inputState.float = false; btnFloat.classList.remove('active'); }
+            });
         }
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft' || e.key === 'a') { touchLeft = true; document.getElementById('btnLeft').classList.add('active'); }
-            if (e.key === 'ArrowRight' || e.key === 'd') { touchRight = true; document.getElementById('btnRight').classList.add('active'); }
-            if (e.key === 'ArrowUp' || e.key === ' ' || e.key === 'w') { if (!isFloating) playSound('float'); isFloating = true; document.getElementById('btnFloat').classList.add('active'); }
-        });
-        document.addEventListener('keyup', (e) => {
-            if (e.key === 'ArrowLeft' || e.key === 'a') { touchLeft = false; document.getElementById('btnLeft').classList.remove('active'); }
-            if (e.key === 'ArrowRight' || e.key === 'd') { touchRight = false; document.getElementById('btnRight').classList.remove('active'); }
-            if (e.key === 'ArrowUp' || e.key === ' ' || e.key === 'w') { isFloating = false; document.getElementById('btnFloat').classList.remove('active'); }
-        });
-
-        setupButton('btnLeft', 'left');
-        setupButton('btnRight', 'right');
-        setupButton('btnFloat', 'float');
+        setupControls();
 
         function startGame() {
             initAudio();
@@ -530,11 +516,11 @@
             shakeIntensity = 0;
             scrollSpeed = 0;
             
-            touchLeft = false; touchRight = false; isFloating = false;
-            activeTouches.clear();
+            // 入力リセット
+            inputState = { left: false, right: false, float: false };
             document.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
 
-            cat = { x: canvasWidth / 2, y: canvasHeight * 0.3, vx: 0, vy: 0, expression: 'normal', expressionTimer: 0 };
+            cat = { x: canvasWidth / 2, y: canvasHeight * 0.3, vx: 0, vy: 0, angle: 0, expression: 'normal', expressionTimer: 0 };
             obstacles = [];
             items = [];
             particles = [];
@@ -546,6 +532,7 @@
             document.getElementById('clearScreen').classList.add('hidden');
             document.getElementById('hud').classList.remove('hidden');
             document.getElementById('controls-layer').classList.remove('hidden');
+            document.getElementById('touch-zones').style.pointerEvents = 'auto'; // ゲーム中のみタッチ有効
         }
 
         function update() {
@@ -556,18 +543,25 @@
 
             frameCount++;
 
-            // Goal Check
             if (depth >= CONFIG.GOAL_DEPTH) {
                 gameClear();
                 return;
             }
 
-            // Physics
-            if (touchLeft) cat.vx -= CONFIG.MOVE_ACCEL;
-            if (touchRight) cat.vx += CONFIG.MOVE_ACCEL;
+            // --- 物理挙動 (強化版) ---
+            if (inputState.left) cat.vx -= CONFIG.MOVE_ACCEL;
+            if (inputState.right) cat.vx += CONFIG.MOVE_ACCEL;
+            
+            // 最大速度制限
+            cat.vx = Math.max(Math.min(cat.vx, CONFIG.MAX_H_SPEED), -CONFIG.MAX_H_SPEED);
+            
+            // 摩擦
             cat.vx *= CONFIG.MOVE_FRICTION;
+            
+            // 完全停止の閾値（プルプル防止）
+            if (Math.abs(cat.vx) < 0.05) cat.vx = 0;
 
-            if (isFloating) {
+            if (inputState.float) {
                 cat.vy -= CONFIG.FLOAT_POWER;
                 if (cat.vy < -4) cat.vy = -4;
                 if (frameCount % 5 === 0) createParticles(cat.x + (Math.random()-0.5)*20, cat.y + 20, '#FFF', 1);
@@ -576,21 +570,31 @@
             }
 
             cat.vy = Math.min(cat.vy, CONFIG.MAX_FALL_SPEED);
+            
             cat.x += cat.vx;
             cat.y += cat.vy;
 
-            if (cat.x < CONFIG.CAT_SIZE / 2) { cat.x = CONFIG.CAT_SIZE / 2; cat.vx *= -0.5; }
-            if (cat.x > canvasWidth - CONFIG.CAT_SIZE / 2) { cat.x = canvasWidth - CONFIG.CAT_SIZE / 2; cat.vx *= -0.5; }
+            // 角度計算（移動に合わせて傾ける）
+            const targetAngle = (cat.vx / CONFIG.MAX_H_SPEED) * 0.4; // 最大0.4ラジアン傾く
+            cat.angle += (targetAngle - cat.angle) * 0.2;
 
-            // Scroll
+            // 壁判定
+            if (cat.x < CONFIG.CAT_SIZE / 2) { 
+                cat.x = CONFIG.CAT_SIZE / 2; cat.vx *= -0.5; 
+            }
+            if (cat.x > canvasWidth - CONFIG.CAT_SIZE / 2) { 
+                cat.x = canvasWidth - CONFIG.CAT_SIZE / 2; cat.vx *= -0.5; 
+            }
+
+            // Scroll Logic
             scrollSpeed = 0;
-            if (cat.y > canvasHeight * 0.4) {
-                scrollSpeed = cat.y - canvasHeight * 0.4;
-                cat.y = canvasHeight * 0.4;
+            if (cat.y > canvasHeight * 0.45) { // 画面下半分より下に行きそうならスクロール
+                scrollSpeed = cat.y - canvasHeight * 0.45;
+                cat.y = canvasHeight * 0.45;
                 depth += scrollSpeed * 0.5;
-            } else if (cat.y < canvasHeight * 0.2) {
-                let upScroll = canvasHeight * 0.2 - cat.y;
-                cat.y = canvasHeight * 0.2;
+            } else if (cat.y < canvasHeight * 0.15) { // 上に行き過ぎない
+                let upScroll = canvasHeight * 0.15 - cat.y;
+                cat.y = canvasHeight * 0.15;
                 obstacles.forEach(obs => obs.y += upScroll);
                 items.forEach(item => item.y += upScroll);
             }
@@ -600,16 +604,16 @@
                 items.forEach(item => item.y -= scrollSpeed);
             }
 
-            // Spawn
-            const spawnInterval = Math.max(CONFIG.SPAWN_INTERVAL_MIN, CONFIG.SPAWN_INTERVAL_BASE - depth * 0.3);
+            // Spawn Logic
+            const spawnInterval = Math.max(CONFIG.SPAWN_INTERVAL_MIN, CONFIG.SPAWN_INTERVAL_BASE - depth * 0.25);
             if (Date.now() - lastSpawnTime > spawnInterval) {
-                if (depth > CONFIG.RISING_ENEMY_START_DEPTH && Math.random() < 0.4) {
+                if (depth > CONFIG.RISING_ENEMY_START_DEPTH && Math.random() < 0.45) {
                     spawnRisingObstacle();
                 } else {
                     spawnObstacle();
                 }
                 lastSpawnTime = Date.now();
-                if (Math.random() < 0.3) {
+                if (Math.random() < 0.35) {
                     const itemTypes = ['star', 'star', 'star', 'barrier'];
                     spawnItem(itemTypes[Math.floor(Math.random() * itemTypes.length)]);
                 }
@@ -678,7 +682,7 @@
         }
 
         function updateBgEffects() {
-            if (bgParticles.length < 20) {
+            if (bgParticles.length < 25) {
                 bgParticles.push({
                     x: Math.random() * canvasWidth,
                     y: canvasHeight + 10,
@@ -692,11 +696,11 @@
             });
 
             if (scrollSpeed > 3) {
-                if (speedLines.length < 10) {
+                if (speedLines.length < 12) {
                     speedLines.push({
                         x: Math.random() * canvasWidth,
                         y: canvasHeight + 50,
-                        len: Math.random() * 50 + 30
+                        len: Math.random() * 60 + 40
                     });
                 }
                 speedLines.forEach((l, i) => {
@@ -707,40 +711,61 @@
         }
 
         function drawCat() {
-            const { x, y, expression } = cat;
+            const { x, y, expression, angle } = cat;
             const size = CONFIG.CAT_SIZE;
             
             ctx.save();
             ctx.translate(x, y);
+            ctx.rotate(angle); // 進行方向に傾ける
 
-            if (isFloating) ctx.scale(1.1, 0.9);
-            else {
-                const stretch = Math.max(0, (cat.vy - 2) * 0.05);
-                ctx.scale(1 - stretch * 0.3, 1 + stretch);
+            // アニメーション用スケール（落下速度で少し伸びる）
+            let stretchY = 1 + Math.max(0, cat.vy) * 0.05;
+            let stretchX = 1 / stretchY;
+            
+            if (inputState.float) { // 風船使用時は少し横に広がる
+                stretchX = 1.1; stretchY = 0.95;
             }
+            
+            ctx.scale(stretchX, stretchY);
 
             // Body
             ctx.fillStyle = '#FFE4C4'; ctx.strokeStyle = '#8B4513'; ctx.lineWidth = 3;
             ctx.beginPath(); ctx.ellipse(0, 0, size * 0.45, size * 0.4, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-            // Ears
-            ctx.beginPath(); ctx.moveTo(-size * 0.35, -size * 0.25); ctx.lineTo(-size * 0.25, -size * 0.55); ctx.lineTo(-size * 0.1, -size * 0.25); ctx.fill(); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(size * 0.35, -size * 0.25); ctx.lineTo(size * 0.25, -size * 0.55); ctx.lineTo(size * 0.1, -size * 0.25); ctx.fill(); ctx.stroke();
+            
+            // Ears (座標調整)
+            ctx.beginPath(); ctx.moveTo(-size * 0.35, -size * 0.25); ctx.lineTo(-size * 0.25, -size * 0.6); ctx.lineTo(-size * 0.1, -size * 0.25); ctx.fill(); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(size * 0.35, -size * 0.25); ctx.lineTo(size * 0.25, -size * 0.6); ctx.lineTo(size * 0.1, -size * 0.25); ctx.fill(); ctx.stroke();
 
             // Face
             ctx.fillStyle = '#333';
             if (expression === 'sparkle') {
                 ctx.fillStyle = '#FFD700'; drawStar(-size*0.15, -size*0.1, 5, 6, 3); drawStar(size*0.15, -size*0.1, 5, 6, 3);
+            } else if (expression === 'surprised') {
+                 ctx.beginPath(); ctx.arc(-size*0.15, -size*0.15, 4, 0, Math.PI*2); ctx.arc(size*0.15, -size*0.15, 4, 0, Math.PI*2); ctx.stroke(); // 目を×に
+                 ctx.beginPath(); ctx.moveTo(-size*0.2, -size*0.2); ctx.lineTo(-size*0.1, -size*0.1); ctx.moveTo(-size*0.1, -size*0.2); ctx.lineTo(-size*0.2, -size*0.1); ctx.stroke();
             } else {
                 ctx.beginPath(); ctx.arc(-size*0.15, -size*0.1, 3, 0, Math.PI*2); ctx.arc(size*0.15, -size*0.1, 3, 0, Math.PI*2); ctx.fill();
             }
 
+            // バリア
             if (barrierCount > 0) {
                 ctx.strokeStyle = `rgba(100, 200, 255, ${0.5 + Math.sin(frameCount * 0.1) * 0.3})`;
-                ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, size * 0.6, 0, Math.PI * 2); ctx.stroke();
+                ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, size * 0.65, 0, Math.PI * 2); ctx.stroke();
             }
-            if (isFloating) {
-                ctx.strokeStyle = '#333'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, -size*0.4); ctx.lineTo(0, -size*0.8); ctx.stroke();
-                ctx.fillStyle = 'rgba(255, 100, 100, 0.9)'; ctx.beginPath(); ctx.ellipse(0, -size*1.0, size*0.3, size*0.35, 0, 0, Math.PI*2); ctx.fill();
+            
+            // 風船紐
+            if (inputState.float) {
+                ctx.strokeStyle = '#333'; ctx.lineWidth = 1; ctx.beginPath(); 
+                ctx.moveTo(0, -size*0.4); 
+                // 紐が揺れる
+                ctx.quadraticCurveTo(Math.sin(frameCount*0.3)*5, -size*0.6, 0, -size*0.9);
+                ctx.stroke();
+                
+                ctx.fillStyle = 'rgba(255, 100, 100, 0.9)'; 
+                ctx.beginPath(); ctx.ellipse(0, -size*1.1, size*0.35, size*0.4, 0, 0, Math.PI*2); ctx.fill();
+                // 風船のハイライト
+                ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                ctx.beginPath(); ctx.ellipse(-size*0.1, -size*1.2, 5, 8, -0.5, 0, Math.PI*2); ctx.fill();
             }
             ctx.restore();
         }
@@ -749,43 +774,64 @@
             const types = ['cloud', 'bird', 'balloon'];
             const type = types[Math.floor(Math.random() * types.length)];
             let size = 30;
-            if (type === 'cloud') size = 40; else if (type === 'bird') size = 30; else if (type === 'balloon') size = 25;
+            if (type === 'cloud') size = 45; else if (type === 'bird') size = 32; else if (type === 'balloon') size = 28;
 
             obstacles.push({
                 x: Math.random() * (canvasWidth - size*2) + size,
-                y: -50, size: size, type: type,
+                y: -60, size: size, type: type,
                 vx: (Math.random() - 0.5) * 2, vy: 2 + Math.random() * 2,
+                angle: 0,
+                rotSpeed: (Math.random()-0.5) * 0.05,
                 frameOffset: Math.random() * 10
             });
         }
 
         function spawnRisingObstacle() {
             playSound('warning');
-            const size = 35;
+            const size = 38;
             obstacles.push({
                 x: Math.random() * (canvasWidth - size*2) + size,
-                y: canvasHeight + 50, size: size, type: 'rocket',
-                vx: 0, vy: -4, frameOffset: 0
+                y: canvasHeight + 60, size: size, type: 'rocket',
+                vx: 0, vy: -5, angle: 0, rotSpeed: 0, frameOffset: 0
             });
         }
 
         function updateObstacles() {
             obstacles.forEach((obs, index) => {
                 obs.y += obs.vy; obs.x += obs.vx;
+                obs.angle += obs.rotSpeed; // 回転
+                
                 if(obs.type !== 'rocket') obs.x += Math.sin(frameCount * 0.05 + obs.frameOffset) * 0.5;
-                if (obs.y > canvasHeight + 60 || obs.y < -60) obstacles.splice(index, 1);
+                if (obs.y > canvasHeight + 80 || obs.y < -80) obstacles.splice(index, 1);
             });
         }
 
         function drawObstacles() {
             obstacles.forEach(obs => {
-                ctx.save(); ctx.translate(obs.x, obs.y);
+                ctx.save(); 
+                ctx.translate(obs.x, obs.y);
+                
+                // SVG的な動きをCanvasで再現（回転や伸縮）
                 if (obs.type === 'cloud') {
-                    ctx.fillStyle = '#FFF'; ctx.beginPath(); ctx.arc(0, 0, obs.size/2, 0, Math.PI*2); ctx.arc(-obs.size*0.5, obs.size*0.2, obs.size*0.3, 0, Math.PI*2); ctx.arc(obs.size*0.5, obs.size*0.2, obs.size*0.3, 0, Math.PI*2); ctx.fill();
+                    // 雲は少しつぶれてふわふわ
+                    ctx.scale(1 + Math.sin(frameCount*0.05 + obs.frameOffset)*0.05, 1 - Math.sin(frameCount*0.05 + obs.frameOffset)*0.05);
+                    ctx.fillStyle = '#FFF'; 
+                    ctx.beginPath(); ctx.arc(0, 0, obs.size/2, 0, Math.PI*2); 
+                    ctx.arc(-obs.size*0.5, obs.size*0.2, obs.size*0.3, 0, Math.PI*2); 
+                    ctx.arc(obs.size*0.5, obs.size*0.2, obs.size*0.3, 0, Math.PI*2); 
+                    ctx.fill();
                 } else if (obs.type === 'bird') {
-                    ctx.fillStyle = '#FFC107'; const wingY = Math.sin(frameCount * 0.2 + obs.frameOffset) * 10;
-                    ctx.beginPath(); ctx.moveTo(-obs.size/2, 0); ctx.quadraticCurveTo(-obs.size/4, -10 + wingY, 0, 0); ctx.quadraticCurveTo(obs.size/4, -10 + wingY, obs.size/2, 0); ctx.lineTo(0, 5); ctx.fill();
+                    ctx.rotate(Math.atan2(obs.vy, obs.vx) * 0.5); // 進行方向へ少し向く
+                    ctx.fillStyle = '#FFC107'; 
+                    const wingY = Math.sin(frameCount * 0.3 + obs.frameOffset) * 12;
+                    ctx.beginPath(); ctx.moveTo(-obs.size/2, 0); 
+                    ctx.quadraticCurveTo(-obs.size/4, -15 + wingY, 0, 0); 
+                    ctx.quadraticCurveTo(obs.size/4, -15 + wingY, obs.size/2, 0); 
+                    ctx.lineTo(0, 8); ctx.fill();
+                    // 目
+                    ctx.fillStyle = 'black'; ctx.beginPath(); ctx.arc(0, -2, 2, 0, Math.PI*2); ctx.fill();
                 } else if (obs.type === 'balloon') {
+                    ctx.rotate(Math.sin(frameCount*0.05 + obs.frameOffset) * 0.2); // ゆらゆら
                     ctx.strokeStyle = '#FFF'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, obs.size/2); ctx.quadraticCurveTo(5, obs.size, 0, obs.size*1.5); ctx.stroke();
                     ctx.fillStyle = '#FF69B4'; ctx.beginPath(); ctx.ellipse(0, -2, obs.size/2, obs.size*0.6, 0, 0, Math.PI*2); ctx.fill();
                     ctx.beginPath(); ctx.moveTo(0, obs.size/2); ctx.lineTo(-3, obs.size/2 + 6); ctx.lineTo(3, obs.size/2 + 6); ctx.fill();
@@ -794,26 +840,36 @@
                     ctx.fillStyle = '#E74C3C'; ctx.strokeStyle = '#C0392B'; ctx.lineWidth = 2;
                     ctx.beginPath(); ctx.moveTo(0, -obs.size/2); ctx.quadraticCurveTo(obs.size/2, 0, obs.size/2, obs.size/2); ctx.lineTo(-obs.size/2, obs.size/2); ctx.quadraticCurveTo(-obs.size/2, 0, 0, -obs.size/2); ctx.fill(); ctx.stroke();
                     ctx.fillStyle = '#87CEEB'; ctx.beginPath(); ctx.arc(0, 0, obs.size/4, 0, Math.PI*2); ctx.fill();
-                    if (frameCount % 4 < 2) { ctx.fillStyle = '#F1C40F'; ctx.beginPath(); ctx.moveTo(-obs.size/4, obs.size/2); ctx.lineTo(0, obs.size); ctx.lineTo(obs.size/4, obs.size/2); ctx.fill(); }
+                    // バーニア噴射
+                    if (frameCount % 4 < 2) { 
+                        ctx.fillStyle = '#F1C40F'; ctx.beginPath(); ctx.moveTo(-obs.size/4, obs.size/2); ctx.lineTo(0, obs.size*1.2); ctx.lineTo(obs.size/4, obs.size/2); ctx.fill(); 
+                    }
                 }
                 ctx.restore();
             });
         }
 
         function spawnItem(type) {
-            items.push({ x: Math.random() * (canvasWidth - 40) + 20, y: -50, type: type, vy: 1.5, phase: Math.random() * Math.PI });
+            items.push({ x: Math.random() * (canvasWidth - 40) + 20, y: -50, type: type, vy: 1.5, phase: Math.random() * Math.PI, rot: 0 });
         }
         function updateItems() {
             items.forEach((item, index) => {
                 item.y += item.vy; item.x += Math.sin(frameCount * 0.05 + item.phase) * 0.5;
+                item.rot += 0.05; // 回転
                 if (item.y > canvasHeight + 50) items.splice(index, 1);
             });
         }
         function drawItems() {
             items.forEach(item => {
                 ctx.save(); ctx.translate(item.x, item.y);
-                if (item.type === 'star') { ctx.fillStyle = '#FFD700'; drawStar(0, 0, 5, 12, 6); }
-                else if (item.type === 'barrier') { ctx.strokeStyle = '#64C8FF'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI*2); ctx.stroke(); ctx.fillStyle = 'rgba(100, 200, 255, 0.3)'; ctx.fill(); }
+                if (item.type === 'star') { 
+                    ctx.rotate(item.rot);
+                    ctx.fillStyle = '#FFD700'; drawStar(0, 0, 5, 14, 7); 
+                }
+                else if (item.type === 'barrier') { 
+                    ctx.scale(1 + Math.sin(frameCount*0.1)*0.1, 1 + Math.sin(frameCount*0.1)*0.1); // 脈動
+                    ctx.strokeStyle = '#64C8FF'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, 14, 0, Math.PI*2); ctx.stroke(); ctx.fillStyle = 'rgba(100, 200, 255, 0.3)'; ctx.fill(); 
+                }
                 ctx.restore();
             });
         }
@@ -829,13 +885,13 @@
         }
 
         function createParticles(x, y, color, count) {
-            for(let i=0; i<count; i++) particles.push({ x: x, y: y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, life: 30, color: color, size: Math.random()*3+2 });
+            for(let i=0; i<count; i++) particles.push({ x: x, y: y, vx: (Math.random()-0.5)*7, vy: (Math.random()-0.5)*7, life: 40, color: color, size: Math.random()*4+2 });
         }
         function updateParticles() {
             particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.life--; if(p.life <= 0) particles.splice(i, 1); });
         }
         function drawParticles() {
-            particles.forEach(p => { ctx.globalAlpha = p.life/30; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); }); ctx.globalAlpha = 1;
+            particles.forEach(p => { ctx.globalAlpha = p.life/40; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); }); ctx.globalAlpha = 1;
         }
 
         function checkCollisions() {
@@ -850,7 +906,7 @@
             });
             items.forEach((item, i) => {
                 const dist = Math.hypot(cat.x - item.x, cat.y - item.y);
-                if (dist < catR + 15) {
+                if (dist < catR + 18) {
                     items.splice(i, 1);
                     if (item.type === 'star') { stars++; createParticles(item.x, item.y, '#FFD700', 15); playSound('star'); cat.expression = 'sparkle'; cat.expressionTimer = 30; }
                     else if (item.type === 'barrier') { barrierCount++; playSound('star'); }
@@ -872,6 +928,7 @@
             document.getElementById('resultStars').textContent = stars;
             document.getElementById('hud').classList.add('hidden');
             document.getElementById('controls-layer').classList.add('hidden');
+            document.getElementById('touch-zones').style.pointerEvents = 'none';
             document.getElementById('resultScreen').classList.remove('hidden');
         }
 
@@ -880,7 +937,6 @@
             cat.expression = 'sparkle';
             playSound('clear');
             
-            // 花火的な演出
             for(let i=0; i<10; i++) {
                 setTimeout(() => {
                     createParticles(canvasWidth/2 + (Math.random()-0.5)*200, canvasHeight/2 + (Math.random()-0.5)*200, '#FFD700', 20);
@@ -893,22 +949,51 @@
             document.getElementById('clearStars').textContent = stars;
             document.getElementById('hud').classList.add('hidden');
             document.getElementById('controls-layer').classList.add('hidden');
+            document.getElementById('touch-zones').style.pointerEvents = 'none';
             document.getElementById('clearScreen').classList.remove('hidden');
         }
 
-        // イベントリスナー
-        document.getElementById('startBtn').addEventListener('click', (e) => { e.preventDefault(); initAudio(); startGame(); });
-        document.getElementById('retryBtn').addEventListener('click', (e) => { e.preventDefault(); initAudio(); startGame(); });
-        document.getElementById('clearRetryBtn').addEventListener('click', (e) => { e.preventDefault(); initAudio(); startGame(); });
+        // スタート用星生成
+        function initStartScreenStars() {
+            const container = document.getElementById('startBgAnim');
+            container.innerHTML = '';
+            for(let i=0; i<30; i++) {
+                const star = document.createElement('div');
+                star.className = 'star-anim';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.width = (Math.random() * 3 + 1) + 'px';
+                star.style.height = star.style.width;
+                star.style.setProperty('--duration', (Math.random() * 2 + 1) + 's');
+                star.style.animationDelay = (Math.random() * 2) + 's';
+                container.appendChild(star);
+            }
+        }
+
+        // イベントリスナー登録
+        const startBtn = document.getElementById('startBtn');
+        const retryBtn = document.getElementById('retryBtn');
+        const clearRetryBtn = document.getElementById('clearRetryBtn');
         
+        // タッチイベントの伝播を防ぐ
+        [startBtn, retryBtn, clearRetryBtn].forEach(btn => {
+            btn.addEventListener('touchstart', (e) => e.stopPropagation(), {passive: true});
+            btn.addEventListener('click', (e) => {
+                e.preventDefault(); e.stopPropagation(); initAudio(); startGame();
+            });
+        });
+
+        // 最初のインタラクションでオーディオ許可
         let userInteracted = false;
         const enableAudio = () => { if (!userInteracted) { userInteracted = true; initAudio(); } };
         document.addEventListener('touchstart', enableAudio, { once: true });
         document.addEventListener('click', enableAudio, { once: true });
 
         window.addEventListener('resize', resize);
+        
+        // 初期化実行
         resize();
-        initStartScreenStars(); // 星空初期化
+        initStartScreenStars();
         document.getElementById('startBest').textContent = bestScore;
 
         function gameLoop() {
