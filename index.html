@@ -228,6 +228,30 @@
     </footer>
 
     <script>
+        // ===============================================
+        // iOS Double-Tap Prevention (必須)
+        // ===============================================
+        let lastTap = 0;
+        document.addEventListener('touchstart', e => {
+            const now = Date.now();
+            if (now - lastTap < 300) e.preventDefault();
+            lastTap = now;
+        }, { passive: false });
+
+        document.addEventListener('dblclick', e => e.preventDefault());
+        document.addEventListener('contextmenu', e => e.preventDefault());
+
+        // ===============================================
+        // WebAudio Unlock for iOS
+        // ===============================================
+        function unlockAudio() {
+            if (window.Tone && Tone.context) {
+                if (Tone.context.state === 'suspended') Tone.context.resume();
+            }
+        }
+        document.addEventListener('pointerdown', unlockAudio, { once: true });
+        document.addEventListener('touchstart', unlockAudio, { once: true });
+
         class SoundEngine {
             constructor() {
                 this.muted = false;
@@ -376,6 +400,36 @@
         let speedBoostTimer = 0; // 10秒間のスピードブースト
         let baseSpeedMultiplier = 1.0;
 
+        // ===============================================
+        // Phase System: 0-30s Normal | 30-40s Speed Up | 40-70s Chaos
+        // ===============================================
+        let gameStartTime = 0;
+        let currentPhase = 1; // 1: Normal, 2: Speed Up, 3: Chaos
+
+        function updatePhase() {
+            if (gameStartTime === 0) return;
+            const elapsedSeconds = (Date.now() - gameStartTime) / 1000;
+
+            if (elapsedSeconds < 30) {
+                currentPhase = 1; // Normal
+                baseSpeedMultiplier = 1.0;
+                boat.width = 70;
+            } else if (elapsedSeconds < 40) {
+                currentPhase = 2; // Speed Up Only
+                baseSpeedMultiplier = 1.5;
+                boat.width = 70;
+            } else if (elapsedSeconds < 70) {
+                currentPhase = 3; // Chaos Mode
+                baseSpeedMultiplier = 1.5;
+                boat.width = 35; // 1/2 size
+            } else {
+                // Return to normal after 70s
+                currentPhase = 1;
+                baseSpeedMultiplier = 1.0;
+                boat.width = 70;
+            }
+        }
+
         // Game Entities
         let boat = { lane: 2, targetX: 0, currentX: 0, y: 0, width: 70, height: 26 };
         let parachutists = [];
@@ -457,7 +511,13 @@
                 this.parachuteOpened = true;
                 this.stuckOnTree = false;
                 this.id = Math.random();
-                this.type = type; // 'human', 'elephant', 'giraffe', 'crocodile'
+                this.type = type; // 'human', 'ant'
+
+                // Phase 3: Ant mode
+                if (currentPhase === 3) {
+                    this.type = 'ant';
+                    this.size = 6; // 1/2 size
+                }
             }
 
             update() {
@@ -731,8 +791,36 @@
             ctx.restore();
         }
 
+        function drawAnt(p) {
+            // Phase 3: Tiny pixel ant
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.fillStyle = currentTheme.ink;
+            // Tiny parachute (no lines for simplicity)
+            ctx.beginPath();
+            ctx.arc(0, -8, 4, Math.PI, 0, false);
+            ctx.fill();
+            // Ant body: 3 segments
+            ctx.fillRect(-2, -2, 4, 2);
+            ctx.fillRect(-2, 0, 4, 2);
+            ctx.fillRect(-2, 2, 4, 2);
+            // Antennae
+            ctx.strokeStyle = currentTheme.ink;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(-1, -2);
+            ctx.lineTo(-3, -5);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(1, -2);
+            ctx.lineTo(3, -5);
+            ctx.stroke();
+            ctx.restore();
+        }
+
         function drawParachutist(p) {
-            if (p.type === 'human') drawHuman(p);
+            if (p.type === 'ant') drawAnt(p);
+            else if (p.type === 'human') drawHuman(p);
             else if (p.type === 'elephant') drawElephant(p);
             else if (p.type === 'giraffe') drawGiraffe(p);
             else if (p.type === 'crocodile') drawCrocodile(p);
@@ -752,12 +840,14 @@
             ctx.fillStyle = currentTheme.ocean;
             ctx.fillRect(0, canvas.height - 35, canvas.width, 35);
 
-            // Wave Details
+            // Wave Details (Phase 3: 2x intensity)
             ctx.strokeStyle = currentTheme.inkLight;
             ctx.lineWidth = 2;
+            const waveAmplitude = (currentPhase === 3) ? 6 : 3; // 2倍激しい
+            const waveFrequency = (currentPhase === 3) ? 3 : 2;
             ctx.beginPath();
             for (let x = 0; x < canvas.width; x += 30) {
-                const waveY = canvas.height - 30 + Math.sin((x + frameCount * 2) * 0.05) * 3;
+                const waveY = canvas.height - 30 + Math.sin((x + frameCount * waveFrequency) * 0.05) * waveAmplitude;
                 if (x === 0) ctx.moveTo(x, waveY);
                 else ctx.lineTo(x, waveY);
             }
@@ -777,6 +867,9 @@
 
             frameCount++;
 
+            // Update Phase System (30s Normal | 30-40s Speed | 40-70s Chaos)
+            updatePhase();
+
             // Speed Boost: 30秒ごとに10秒間スピード2倍
             if (frameCount % 1800 === 0) { // 30秒 × 60fps
                 speedBoostTimer = 600; // 10秒 × 60fps
@@ -784,9 +877,7 @@
             }
             if (speedBoostTimer > 0) {
                 speedBoostTimer--;
-                baseSpeedMultiplier = 2.0;
-            } else {
-                baseSpeedMultiplier = 1.0;
+                baseSpeedMultiplier = Math.max(baseSpeedMultiplier, 2.0);
             }
 
             // Stage Progression: 50救出ごとに面を進める
@@ -940,6 +1031,8 @@
             stage = 1;
             speedBoostTimer = 0;
             baseSpeedMultiplier = 1.0;
+            currentPhase = 1;
+            gameStartTime = Date.now(); // Phase system timer
             parachutists = [];
             sharks = [];
             particles = [];
